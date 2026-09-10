@@ -1,5 +1,5 @@
 // network-first per HTML — pa te, versioni i vjeter ngec pergjithmone.
-const CACHE = "pika-v2";
+const CACHE = "pika-v3";
 const ASSETS = ["./","./index.html","./manifest.json","./icon-192.png","./icon-512.png"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE)

@@ -189,7 +189,7 @@ window.onerror=function(m,src,ln){
 
 // Rritet me çdo version të ri — BASHKË me emrin e cache-it te sw.js,
 // përndryshe telefoni mbetet me versionin e vjetër dhe s'kupton pse.
-var APP_VER="v2";
+var APP_VER="v3";
 
 var $=function(s){ return document.querySelector(s); };
 function esc(s){ return String(s==null?"":s).split("&").join("&amp;")
@@ -807,42 +807,62 @@ $("#gGo").onclick=async function(){
       +'».</div>'; return; }
     var la=+gr[0].lat, ln=+gr[0].lon;
     var oq='[out:json][timeout:25];('
-      +'node["amenity"~"cafe|bar|restaurant|fast_food|pub"](around:2500,'+la+','+ln+');'
-      +'node["shop"~"convenience|supermarket|kiosk"](around:2500,'+la+','+ln+');'
+      +'node["amenity"~"cafe|bar|restaurant|fast_food|pub|fuel"](around:2500,'+la+','+ln+');'
+      +'node["shop"~"convenience|supermarket|kiosk|tobacco|newsagent"](around:2500,'
+      +la+','+ln+');'
       +');out body 200;';
     var r=await fetch("https://overpass-api.de/api/interpreter",
       {method:"POST",body:"data="+encodeURIComponent(oq),
        headers:{"Content-Type":"application/x-www-form-urlencoded"}});
     var d=await r.json();
-    var SHOPS=["supermarket","convenience","kiosk"];
+    // KONKURRENCA — vende që SHESIN duhan vetë. Pika karburanti dhe kioska
+    // shesin gjithmonë; afërsia me to e ul vlerën e një lokali.
+    var SHOPS=["supermarket","convenience","kiosk","fuel","tobacco","newsagent"];
+    // Vende ku aparati s'ka kuptim — s'ka qëndrim, s'ka duhanpirës
+    var SKIP=["internet_cafe","ice_cream","bakery","pharmacy"];
+    // Emra që tregojnë shitje duhani edhe kur kategoria s'e thotë
+    var TOB=["tobacco","duhan","cigar","tabak","trafik","kiosk","market",
+             "minimarket","supermarket","shitore"];
     var all=(d.elements||[]).map(function(e){
       var t=e.tags||{};
       return {name:t.name||t.operator||"", kind:t.amenity||t.shop||"",
               lat:e.lat, lng:e.lon}; }).filter(function(x){ return x.name; });
     var shops=all.filter(function(x){ return SHOPS.indexOf(x.kind)>=0; });
-    var venues=all.filter(function(x){ return SHOPS.indexOf(x.kind)<0; });
+    var venues=all.filter(function(x){ return SHOPS.indexOf(x.kind)<0
+                                          && SKIP.indexOf(x.kind)<0; });
     var have={}; PIKA.forEach(function(x){
       have[(x.emri||"").toLowerCase().trim()]=x.st; });
     var found=venues.map(function(v){
       var m=null;
       shops.forEach(function(s){ var dd=_dist(v.lat,v.lng,s.lat,s.lng)*1000;
         if(m===null||dd<m) m=dd; });
+      var nm=(v.name||"").toLowerCase();
+      var sells=TOB.some(function(w){ return nm.indexOf(w)>=0; });
       return {name:v.name,kind:v.kind,lat:v.lat,lng:v.lng,
-              shopM:(m===null?null:Math.round(m)),
+              shopM:(m===null?null:Math.round(m)), sells:sells,
               have:have[(v.name||"").toLowerCase().trim()]||""};
     });
+    // të pavizituarit para; ata që shesin vetë duhan në fund; më larg = më lart
     found.sort(function(a,b){ return (a.have?1:0)-(b.have?1:0)
+      || (a.sells?1:0)-(b.sells?1:0)
       || ((b.shopM===null?99999:b.shopM)-(a.shopM===null?99999:a.shopM)); });
+    window._konk=shops.length;
     window._found=found; window._foundCity=q;
     var nnew=found.filter(function(x){ return !x.have; }).length;
     box.innerHTML='<div class="note" style="padding:0 2px 8px">'+found.length
-      +' lokale · <b>'+nnew+'</b> të reja</div><div class="card">'
+      +' lokale · <b>'+nnew+'</b> të reja'
+      +' · <span style="color:#fca5a5">'+shops.length+' konkurrentë (heqen)</span>'
+      +'</div><div class="card">'
       +found.map(function(f,i){
-        var dm=(f.shopM===null)?"pa market afër":(f.shopM+" m nga marketi");
-        var col=(f.shopM===null||f.shopM>250)?"#22c55e":"#8b98ad";
+        var dm=(f.shopM===null)?"pa konkurrencë afër":(f.shopM+" m nga shitësi më i afërt");
+        var col=(f.shopM===null||f.shopM>250)?"#22c55e"
+               :(f.shopM<100?"#ef4444":"#eab308");
         var s=f.have?stInfo(f.have):null;
-        return '<div class="item"><div class="row">'
+        return '<div class="item"'+(f.sells?' style="opacity:.6"':'')+'>'
+          +'<div class="row">'
           +'<b class="grow">'+esc(f.name)+'</b>'
+          +(f.sells?'<span class="tag" style="background:#3f1d1d;color:#fca5a5">'
+                    +'⚠️ SHET VETË</span>':'')
           +(s?('<span class="tag" style="background:'+s[2]+'33;color:'+s[2]+'">'
                +s[1]+'</span>'):'')+'</div>'
           +'<div class="note">'+esc(f.kind)+' · <span style="color:'+col+'">'+dm
