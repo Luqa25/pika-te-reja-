@@ -1,0 +1,1002 @@
+<!doctype html>
+<html lang="sq">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pika të reja">
+<meta name="theme-color" content="#0b1220">
+<link rel="manifest" href="/pika-te-reja/manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<title>Pika të reja</title>
+<style>
+:root{--bg:#0b1220;--card:#141d2f;--line:#243044;--txt:#e8eef8;--dim:#8b98ad;
+      --acc:#38bdf8;--grn:#22c55e;--ylw:#eab308;--red:#ef4444;--pur:#a855f7}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--txt);
+     font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+     padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+header{position:sticky;top:0;z-index:20;background:#0b1220ee;backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);padding:calc(9px + env(safe-area-inset-top)) 12px 9px}
+.row{display:flex;align-items:center;gap:8px}
+.grow{flex:1;min-width:0}
+h1{font-size:16px;margin:0;font-weight:800}
+.note{color:var(--dim);font-size:12.5px}
+input,select,textarea{background:#0d1524;border:1px solid var(--line);color:var(--txt);
+  border-radius:9px;padding:11px;font-size:16px;width:100%;font-family:inherit}
+button{border:none;border-radius:10px;padding:11px 14px;font-size:14px;
+  font-weight:700;background:#1d2842;color:var(--txt)}
+button:active{opacity:.65}
+.pri{background:var(--acc);color:#04121f}
+.btn3d{font-weight:800;font-size:16px;padding:15px 18px;border-radius:13px;
+  box-shadow:0 5px 0 rgba(0,0,0,.42),0 8px 16px rgba(0,0,0,.34),
+             inset 0 1px 0 rgba(255,255,255,.24);
+  transition:transform .07s,box-shadow .07s}
+.btn3d:active{transform:translateY(4px);
+  box-shadow:0 1px 0 rgba(0,0,0,.42),0 2px 5px rgba(0,0,0,.3)}
+main{padding:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:13px;
+  padding:13px;margin-bottom:10px}
+.tag{display:inline-block;font-size:10.5px;padding:3px 8px;border-radius:6px;
+  font-weight:800;white-space:nowrap}
+.item{padding:12px 0;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:none}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;
+  background:#0f1524;border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;background:none;border-radius:0;padding:10px 4px;font-size:11px;
+  font-weight:700;color:var(--dim);display:flex;flex-direction:column;gap:3px;
+  align-items:center}
+nav button b{font-size:19px;font-weight:400;line-height:1}
+nav button.on{color:var(--acc)}
+.screen{display:none}
+.screen.on{display:block}
+.bar{padding:10px 12px;border-radius:10px;font-weight:700;font-size:13px;
+  margin-bottom:10px}
+.warn{background:#3f1d1d;border:1px solid #7f1d1d;color:#fca5a5}
+.soon{background:#3a2a10;border:1px solid #7c5a10;color:#fcd34d}
+label{display:block;font-size:11.5px;color:var(--dim);font-weight:700;
+  margin:9px 0 4px;letter-spacing:.3px}
+#toast{position:fixed;left:12px;right:12px;bottom:calc(74px + env(safe-area-inset-bottom));
+  background:#1e293b;border:1px solid var(--line);padding:12px;border-radius:11px;
+  font-size:13px;display:none;z-index:99;box-shadow:0 8px 24px #0009}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td{padding:7px 0;border-top:1px solid var(--line)}
+td:first-child{color:var(--dim)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="row">
+    <span style="font-size:21px">🔭</span>
+    <div class="grow">
+      <h1>Pika të reja</h1>
+      <div class="note" id="hCount">—</div>
+    </div>
+    <button id="bSync" title="Dërgo te Aparatet">🔄</button>
+  </div>
+</header>
+
+<main>
+  <div id="alerts"></div>
+
+  <!-- ══ PIKAT ══ -->
+  <section id="scPika" class="screen on">
+    <div class="row" style="margin-bottom:9px">
+      <input id="q" placeholder="Kërko: emri, qyteti, personi…" style="font-size:15px">
+    </div>
+    <div class="row" style="gap:5px;overflow-x:auto;margin-bottom:10px" id="filt"></div>
+    <div id="lista"></div>
+  </section>
+
+  <!-- ══ GJEJ LOKALE ══ -->
+  <section id="scGjej" class="screen">
+    <div class="card">
+      <div class="note" style="margin-bottom:9px">Shkruaj qytetin një herë — merr
+        listën e bareve dhe restoranteve, të renditura sipas sa larg janë nga
+        marketi më i afërt (më larg = kandidat më i mirë).</div>
+      <div class="row">
+        <input id="gQ" class="grow" placeholder="p.sh. Pejë">
+        <button class="pri" id="gGo" style="padding:11px 16px">GJEJ</button>
+      </div>
+    </div>
+    <div id="gRez"></div>
+  </section>
+
+  <!-- ══ KALKULATORI ══ -->
+  <section id="scKalk" class="screen">
+    <div class="card">
+      <b style="font-size:15px">🧮 Krahaso ofertën</b>
+      <div class="note" style="margin:5px 0 10px">Para se t'ia prezantosh pronarit —
+        sa i bie me përqindje dhe sa me shumë fikse për pako.</div>
+      <label>SA PAKO NË MUAJ (vlerësim)</label>
+      <input id="kPako" type="text" inputmode="decimal" value="1000">
+      <label>ÇMIMI MESATAR I PAKOS (€)</label>
+      <input id="kCmim" type="text" inputmode="decimal" value="3.50">
+      <label>CIKLI I BARAZIMIT</label>
+      <select id="kCikli"><option value="6">6 muaj</option>
+        <option value="12" selected>12 muaj</option></select>
+    </div>
+    <div id="kRez"></div>
+  </section>
+
+  <!-- ══ BARAZIMET ══ -->
+  <section id="scBaraz" class="screen">
+    <div id="bLista"></div>
+  </section>
+
+  <!-- ══ MË SHUMË ══ -->
+  <section id="scMe" class="screen">
+    <div class="card">
+      <b style="font-size:15px">📤 Eksportet</b>
+      <button class="pri btn3d" id="eCsvBaraz" style="width:100%;margin-top:10px">
+        📊 CSV i barazimeve</button>
+      <div class="note" style="margin:4px 0 10px">Për kontabilitet: lokali, periudha,
+        pakot, qarkullimi, komisioni, e paguar.</div>
+      <button class="pri btn3d" id="eCsvMaps" style="width:100%;background:#0e7490">
+        🗺️ CSV për Google My Maps</button>
+      <div class="note" style="margin:4px 0 10px">Me kolonën e statusit — aktivët
+        dallohen nga potencialët.</div>
+      <button class="btn3d" id="eBackup" style="width:100%;background:#166534;color:#fff">
+        💾 Backup i plotë (JSON)</button>
+      <div class="note" style="margin-top:4px">Gjithçka: pikat, ofertat, barazimet, historia.</div>
+      <button class="btn3d" id="eRestore" style="width:100%;margin-top:9px;background:#7f1d1d;color:#fff">
+        📥 Rikthe nga backup</button>
+    </div>
+    <div class="card">
+      <b style="font-size:15px">🔗 Lidhja me Aparatet</b>
+      <div class="note" style="margin:6px 0">Kur një pikë pranon, kalon vetë te
+        programi Aparatet — të dy janë në të njëjtin domen dhe i ndajnë të dhënat.</div>
+      <button id="bOpenAp" style="width:100%">Hap Aparatet →</button>
+    </div>
+    <div class="card">
+      <b style="font-size:15px">ℹ️ Gjendja</b>
+      <table><tbody id="mStat"></tbody></table>
+    </div>
+  </section>
+</main>
+
+<nav>
+  <button class="on" data-s="scPika"><b>📋</b>Pikat</button>
+  <button data-s="scGjej"><b>🔭</b>Gjej</button>
+  <button data-s="scKalk"><b>🧮</b>Ofertë</button>
+  <button data-s="scBaraz"><b>💶</b>Barazime</button>
+  <button data-s="scMe"><b>⋯</b>Më shumë</button>
+</nav>
+
+<div id="toast"></div>
+
+<script>
+// Kapësi i gabimeve — pa të, një gabim i vetëm e lë ekranin bosh pa shpjegim.
+window.onerror=function(m,src,ln){
+  var t=document.getElementById("toast");
+  if(t){ t.style.display="block"; t.style.background="#3f1d1d";
+         t.textContent="Gabim JS (rreshti "+ln+"): "+m; }
+  return false;
+};
+
+var $=function(s){ return document.querySelector(s); };
+function esc(s){ return String(s==null?"":s).split("&").join("&amp;")
+  .split("<").join("&lt;").split(">").join("&gt;").split('"').join("&quot;"); }
+function eur(n){ return (Math.round((+n||0)*100)/100).toFixed(2); }
+function today(){ return new Date().toISOString().slice(0,10); }
+function addMonths(d,m){ var x=new Date(d+"T12:00:00"); x.setMonth(x.getMonth()+m);
+  return x.toISOString().slice(0,10); }
+function daysBetween(a,b){ return Math.round((new Date(b)-new Date(a))/86400000); }
+
+// ── RUAJTJA ───────────────────────────────────────────────────────────────
+// localStorage lidhet me DOMENIN, jo me shtegun — prandaj ky program dhe
+// Aparatet (të dy te luqa25.github.io) i ndajnë të dhënat automatikisht.
+// Prefiksi "ptr_" i mban të vetat të ndara nga "apar_".
+function load(k,d){ try{ var v=localStorage.getItem(k);
+  return v===null?d:JSON.parse(v); }catch(e){ return d; } }
+function save(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); return true; }
+  catch(e){ toast("⚠️ NUK U RUAJT — kujtesa e telefonit mund të jetë plot.",false);
+            return false; } }
+
+var K_P="ptr_pika", K_O="ptr_oferta", K_B="ptr_barazim", K_L="ptr_log";
+var PIKA=load(K_P,[]), OFER=load(K_O,[]), BARAZ=load(K_B,[]), LOGU=load(K_L,[]);
+
+function persist(){
+  var ok=save(K_P,PIKA)&&save(K_O,OFER)&&save(K_B,BARAZ)&&save(K_L,LOGU);
+  // verifiko me rilexim — ruajtja mund të "duket" e kryer pa qenë
+  if(ok){ var back=load(K_P,null);
+    if(!back || back.length!==PIKA.length){
+      toast("⚠️ Ruajtja dështoi! Bëj backup menjëherë.",false); return false; } }
+  return ok;
+}
+function logIt(what,detail){
+  LOGU.push({t:new Date().toISOString().slice(0,16).replace("T"," "),
+             w:what, d:detail});
+  save(K_L,LOGU);
+}
+
+// ── STATUSET ──────────────────────────────────────────────────────────────
+var ST=[["potencial","🆕 Potencial","#38bdf8"],
+        ["oferte","📄 Ofertë e dhënë","#eab308"],
+        ["pranuar","🤝 Pranuar","#a855f7"],
+        ["aktiv","✅ Aktiv","#22c55e"],
+        ["refuzuar","❌ Refuzuar","#ef4444"],
+        ["hequr","🚫 Hequr","#64748b"]];
+function stInfo(k){ for(var i=0;i<ST.length;i++) if(ST[i][0]===k) return ST[i];
+  return ST[0]; }
+var LLOJ=["kafene","market","restorant","bar","benzinë","tjetër"];
+
+function toast(msg,ok){
+  var t=$("#toast"); t.textContent=msg;
+  t.style.background = ok===false ? "#3f1d1d" : "#14291c";
+  t.style.borderColor = ok===false ? "#7f1d1d" : "#14532d";
+  t.style.display="block";
+  clearTimeout(window._tt);
+  window._tt=setTimeout(function(){ t.style.display="none"; },4200);
+}
+
+// ── NAVIGIMI ──────────────────────────────────────────────────────────────
+document.querySelectorAll("nav button").forEach(function(b){
+  b.onclick=function(){
+    document.querySelectorAll("nav button").forEach(function(x){ x.className=""; });
+    b.className="on";
+    document.querySelectorAll(".screen").forEach(function(s){ s.className="screen"; });
+    $("#"+b.dataset.s).className="screen on";
+    window.scrollTo(0,0);
+    if(b.dataset.s==="scBaraz") drawBaraz();
+    if(b.dataset.s==="scMe") drawStat();
+    if(b.dataset.s==="scKalk") kalk();
+  };
+});
+
+// ── PIKAT ─────────────────────────────────────────────────────────────────
+var filtSt="";
+function drawFilt(){
+  var h='<button class="stF" data-k="" style="'
+    +(filtSt===""?"background:#38bdf8;color:#04121f":"")+'">Të gjitha '
+    +PIKA.length+'</button>';
+  ST.forEach(function(s){
+    var n=PIKA.filter(function(p){ return p.st===s[0]; }).length;
+    if(!n && filtSt!==s[0]) return;
+    h+='<button class="stF" data-k="'+s[0]+'" style="white-space:nowrap;'
+      +(filtSt===s[0]?("background:"+s[2]+";color:#04121f"):"")+'">'+s[1]+' '+n+'</button>';
+  });
+  $("#filt").innerHTML=h;
+  document.querySelectorAll(".stF").forEach(function(b){
+    b.onclick=function(){ filtSt=b.dataset.k; drawFilt(); drawPika(); }; });
+}
+
+function drawPika(){
+  var q=($("#q").value||"").toLowerCase().trim();
+  var rows=PIKA.filter(function(p){
+    if(filtSt && p.st!==filtSt) return false;
+    if(!q) return true;
+    return (p.emri+" "+(p.qyteti||"")+" ("+(p.kontakt||"")+")").toLowerCase().indexOf(q)>=0;
+  }).sort(function(a,b){ return (b.pare||"").localeCompare(a.pare||""); });
+
+  $("#hCount").textContent=PIKA.length+" pika · "
+    +PIKA.filter(function(p){return p.st==="aktiv";}).length+" aktive";
+
+  if(!rows.length){
+    $("#lista").innerHTML='<div class="card note">'
+      +(PIKA.length?"Asnjë me këtë filtër."
+        :"Ende asnjë pikë.<br><br>Shko te <b>🔭 Gjej</b>, shkruaj qytetin, "
+         +"dhe prek statusin te lokalet që viziton.")+'</div>';
+    return;
+  }
+  $("#lista").innerHTML='<div class="card">'+rows.map(function(p){
+    var s=stInfo(p.st);
+    var of=OFER.filter(function(o){ return o.pika===p.id; });
+    var last=of.length?of[of.length-1]:null;
+    var ofTxt=last?('<span class="tag" style="background:#1d2842;color:#8b98ad">'
+      +(last.lloji==="perqindje"?(last.vlera+"%"):(eur(last.vlera)+" €/pako"))
+      +" · "+last.cikli+"muaj</span>"):"";
+    var nd=p.ndjekja?('<span class="tag" style="background:#3a2a10;color:#fcd34d">↩ '
+      +p.ndjekja+'</span>'):"";
+    return '<div class="item" onclick="openPika('+p.id+')">'
+      +'<div class="row"><b class="grow" style="font-size:15px">'+esc(p.emri)+'</b>'
+      +'<span class="tag" style="background:'+s[2]+'33;color:'+s[2]+'">'+s[1]+'</span></div>'
+      +'<div class="note">'+esc(p.qyteti||"—")
+      +(p.lloji?" · "+esc(p.lloji):"")
+      +(p.lat!=null?" · 📍":"")+' '+ofTxt+' '+nd+'</div>'
+      +(p.shenim?'<div class="note" style="color:#b6c2d4">'+esc(p.shenim)+'</div>':'')
+      +'</div>';
+  }).join("")+'</div>';
+}
+$("#q").addEventListener("input",drawPika);
+
+// ── ALARMET ───────────────────────────────────────────────────────────────
+function drawAlerts(){
+  var t=today(), h="";
+  var vone=BARAZ.filter(function(b){ return b.st!=="i_kryer" && b.plan<t; });
+  var afer=BARAZ.filter(function(b){ return b.st!=="i_kryer" && b.plan>=t
+    && daysBetween(t,b.plan)<=30; });
+  var ndj=PIKA.filter(function(p){ return p.ndjekja && p.ndjekja<=t
+    && ["potencial","oferte","pranuar"].indexOf(p.st)>=0; });
+  if(vone.length) h+='<div class="bar warn">⚠️ '+vone.length
+    +' barazime të VONUARA — shko te 💶</div>';
+  if(afer.length) h+='<div class="bar soon">⏳ '+afer.length
+    +' barazime brenda 30 ditëve</div>';
+  if(ndj.length) h+='<div class="bar soon">↩ '+ndj.length
+    +' pika presin ndjekje</div>';
+  $("#alerts").innerHTML=h;
+}
+
+// ── PANELI QË HAPET NGA FUNDI ─────────────────────────────────────────────
+function sheet(title, html){
+  var sh=document.createElement("div");
+  sh.style.cssText="position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.5);"
+                  +"display:flex;align-items:flex-end";
+  sh.innerHTML='<div style="background:#111a2e;width:100%;max-height:92vh;'
+    +'overflow:auto;border-radius:16px 16px 0 0;'
+    +'padding:14px 14px calc(14px + env(safe-area-inset-bottom))">'
+    +'<div class="row" style="margin-bottom:10px">'
+    +'<b class="grow" style="font-size:16px">'+title+'</b>'
+    +'<button class="shX">✕</button></div>'+html+'</div>';
+  document.body.appendChild(sh);
+  sh.querySelector(".shX").onclick=function(){ sh.remove(); };
+  sh.onclick=function(e){ if(e.target===sh) sh.remove(); };
+  return sh;
+}
+
+// ── DETAJI I PIKËS ────────────────────────────────────────────────────────
+function openPika(id){
+  var p=PIKA.filter(function(x){ return x.id===id; })[0];
+  if(!p) return;
+  var s=stInfo(p.st);
+  var of=OFER.filter(function(o){ return o.pika===id; });
+  var bz=BARAZ.filter(function(b){ return b.pika===id; })
+              .sort(function(a,b){ return a.plan.localeCompare(b.plan); });
+
+  var h='<div class="note" style="margin-bottom:10px">'+esc(p.qyteti||"—")
+    +(p.lloji?" · "+esc(p.lloji):"")+'</div>'
+    // statuset — një prekje
+    +'<div class="row" style="gap:5px;overflow-x:auto;margin-bottom:12px">'
+    +ST.map(function(x){ return '<button class="pSt" data-k="'+x[0]+'" '
+      +'style="white-space:nowrap;font-size:12px;padding:8px 11px'
+      +(p.st===x[0]?(";background:"+x[2]+";color:#04121f"):"")+'">'+x[1]+'</button>';
+    }).join("")+'</div>'
+    // të dhënat
+    +'<table><tbody>'
+    +'<tr><td>Personi</td><td>'+esc(p.kontakt||"—")+'</td></tr>'
+    +'<tr><td>Telefoni</td><td>'+(p.tel
+       ?('<a href="tel:'+esc(p.tel)+'" style="color:#38bdf8;font-weight:700">'
+         +esc(p.tel)+' 📞</a>'):"—")+'</td></tr>'
+    +'<tr><td>Vizita e parë</td><td>'+esc(p.pare||"—")+'</td></tr>'
+    +'<tr><td>Ndjekja më</td><td>'+esc(p.ndjekja||"—")+'</td></tr>'
+    +'<tr><td>Pako/muaj (vlerësim)</td><td>'+(p.vler||"—")+'</td></tr>'
+    +'<tr><td>GPS</td><td>'+(p.lat!=null
+       ?('<a href="https://maps.google.com/?q='+p.lat+','+p.lng+'" target="_blank" '
+         +'style="color:#38bdf8">'+p.lat.toFixed(5)+", "+p.lng.toFixed(5)+' 🗺️</a>')
+       :"—")+'</td></tr>'
+    +'</tbody></table>'
+    +'<button id="pEdit" style="width:100%;margin-top:10px">✎ Ndrysho të dhënat</button>';
+
+  // ofertat
+  h+='<div style="margin-top:16px"><b>📄 Ofertat</b></div>';
+  if(!of.length) h+='<div class="note">Asnjë ofertë ende.</div>';
+  else h+=of.map(function(o){
+    var val=o.lloji==="perqindje"?(o.vlera+"% e qarkullimit")
+                                 :(eur(o.vlera)+" € për pako");
+    var stc={draft:"#8b98ad",prezantuar:"#eab308",pranuar:"#22c55e",
+             refuzuar:"#ef4444"}[o.st]||"#8b98ad";
+    return '<div class="item"><div class="row">'
+      +'<b class="grow">'+val+'</b>'
+      +'<span class="tag" style="background:'+stc+'33;color:'+stc+'">'+o.st+'</span></div>'
+      +'<div class="note">çdo '+o.cikli+' muaj · nga '+o.data+' · '+o.kohe+' muaj'
+      +(o.shenim?(' · '+esc(o.shenim)):'')+'</div>'
+      +(o.st!=="pranuar"?('<div class="row" style="margin-top:6px;gap:5px">'
+        +'<button class="oPrez" data-id="'+o.id+'" style="font-size:12px">Prezantova</button>'
+        +'<button class="oPran" data-id="'+o.id+'" style="font-size:12px;'
+        +'background:#166534;color:#fff">✓ Pranoi</button>'
+        +'<button class="oRef" data-id="'+o.id+'" style="font-size:12px">✕ Refuzoi</button>'
+        +'</div>'):'')
+      +'</div>';
+  }).join("");
+  h+='<button class="pri" id="pNewOf" style="width:100%;margin-top:8px">'
+    +'➕ Ofertë e re</button>';
+
+  // barazimet
+  if(bz.length){
+    h+='<div style="margin-top:16px"><b>💶 Barazimet</b></div>'
+      +bz.map(function(b){
+        var c=b.st==="i_kryer"?"#22c55e":(b.plan<today()?"#ef4444":"#8b98ad");
+        return '<div class="item"><div class="row">'
+          +'<span class="grow">'+b.prej+' → '+b.deri+'</span>'
+          +'<span style="color:'+c+';font-weight:700">'
+          +(b.st==="i_kryer"?(eur(b.paguar)+" € ✓"):b.plan)+'</span></div></div>';
+      }).join("");
+  }
+
+  // historia
+  var hist=LOGU.filter(function(l){ return (l.d||"").indexOf(p.emri)>=0; });
+  if(hist.length){
+    h+='<div style="margin-top:16px"><b>📜 Historia</b></div>'
+      +hist.slice(-12).reverse().map(function(l){
+        return '<div class="note" style="padding:4px 0">'+l.t+' — '
+          +esc(l.w)+': '+esc(l.d)+'</div>'; }).join("");
+  }
+
+  h+='<button id="pDel" style="width:100%;margin-top:14px;background:#3f1d1d;'
+    +'color:#fca5a5">🗑 Fshi pikën</button>';
+
+  var sh=sheet(esc(p.emri), h);
+
+  sh.querySelectorAll(".pSt").forEach(function(b){
+    b.onclick=function(){
+      var old=p.st; p.st=b.dataset.k;
+      logIt("status", p.emri+": "+old+" → "+p.st);
+      persist(); sh.remove(); refresh(); openPika(id);
+      try{ if(navigator.vibrate) navigator.vibrate(25); }catch(e){}
+      if(p.st==="pranuar") toast("Pranoi. Shto ofertën dhe shënoje si «Pranoi» "
+        +"që të gjenerohen barazimet.");
+    };
+  });
+  sh.querySelector("#pEdit").onclick=function(){ sh.remove(); editPika(id); };
+  sh.querySelector("#pNewOf").onclick=function(){ sh.remove(); newOferta(id); };
+  sh.querySelectorAll(".oPrez").forEach(function(b){ b.onclick=function(){
+    setOfStatus(+b.dataset.id,"prezantuar",sh,id); }; });
+  sh.querySelectorAll(".oRef").forEach(function(b){ b.onclick=function(){
+    setOfStatus(+b.dataset.id,"refuzuar",sh,id); }; });
+  sh.querySelectorAll(".oPran").forEach(function(b){ b.onclick=function(){
+    setOfStatus(+b.dataset.id,"pranuar",sh,id); }; });
+  sh.querySelector("#pDel").onclick=function(){
+    if(!confirm("Fshi «"+p.emri+"» dhe gjithçka të lidhur me të?")) return;
+    PIKA=PIKA.filter(function(x){ return x.id!==id; });
+    OFER=OFER.filter(function(o){ return o.pika!==id; });
+    BARAZ=BARAZ.filter(function(b){ return b.pika!==id; });
+    logIt("fshirje", p.emri);
+    persist(); sh.remove(); refresh();
+  };
+}
+
+function setOfStatus(ofId, st, sh, pikaId){
+  var o=OFER.filter(function(x){ return x.id===ofId; })[0];
+  if(!o) return;
+  var p=PIKA.filter(function(x){ return x.id===o.pika; })[0];
+  o.st=st;
+  logIt("ofertë "+st, (p?p.emri:"")+": "
+    +(o.lloji==="perqindje"?(o.vlera+"%"):(eur(o.vlera)+" €/pako")));
+  if(st==="pranuar"){
+    if(p){ p.st="pranuar"; }
+    var n=genBarazime(o);
+    toast("✅ Oferta u pranua. U krijuan "+n+" barazime.");
+  }else if(st==="prezantuar" && p && p.st==="potencial"){
+    p.st="oferte";
+  }
+  persist(); sh.remove(); refresh(); openPika(pikaId);
+}
+
+function editPika(id){
+  var p=PIKA.filter(function(x){ return x.id===id; })[0];
+  if(!p) return;
+  var sh=sheet("✎ "+esc(p.emri),
+    '<label>EMRI</label><input id="eE" value="'+esc(p.emri)+'">'
+    +'<label>QYTETI</label><input id="eQ" value="'+esc(p.qyteti||"")+'">'
+    +'<label>LLOJI</label><select id="eL">'
+    +LLOJ.map(function(l){ return '<option'+(p.lloji===l?" selected":"")+'>'+l+'</option>';
+      }).join("")+'</select>'
+    +'<label>PERSONI</label><input id="eK" value="'+esc(p.kontakt||"")+'">'
+    +'<label>TELEFONI</label><input id="eT" type="tel" value="'+esc(p.tel||"")+'">'
+    +'<label>NDJEKJA MË</label><input id="eN" type="date" value="'+esc(p.ndjekja||"")+'">'
+    +'<label>PAKO/MUAJ (vlerësim)</label>'
+    +'<input id="eV" type="text" inputmode="numeric" value="'+(p.vler||"")+'">'
+    +'<label>GPS</label><input id="eG" placeholder="42.66, 20.29" value="'
+    +(p.lat!=null?(p.lat+", "+p.lng):"")+'">'
+    +'<button class="pri" id="eGps" style="width:100%;margin-top:6px">'
+    +'📍 Merr GPS-in ku jam</button>'
+    +'<label>SHËNIM</label><textarea id="eS" rows="3">'+esc(p.shenim||"")+'</textarea>'
+    +'<button class="pri btn3d" id="eOk" style="width:100%;margin-top:12px">RUAJ</button>');
+  sh.querySelector("#eGps").onclick=function(){
+    if(!navigator.geolocation){ toast("Pa GPS.",false); return; }
+    toast("duke marrë GPS…");
+    navigator.geolocation.getCurrentPosition(function(g){
+      sh.querySelector("#eG").value=g.coords.latitude.toFixed(6)+", "
+        +g.coords.longitude.toFixed(6);
+      toast("✅ GPS u mor (±"+Math.round(g.coords.accuracy)+"m)");
+    },function(){ toast("S'u mor GPS-i.",false); },
+    {enableHighAccuracy:true,timeout:12000});
+  };
+  sh.querySelector("#eOk").onclick=function(){
+    p.emri=(sh.querySelector("#eE").value||"").trim()||p.emri;
+    p.qyteti=(sh.querySelector("#eQ").value||"").trim();
+    p.lloji=sh.querySelector("#eL").value;
+    p.kontakt=(sh.querySelector("#eK").value||"").trim();
+    p.tel=(sh.querySelector("#eT").value||"").trim();
+    p.ndjekja=sh.querySelector("#eN").value||"";
+    p.vler=parseInt(sh.querySelector("#eV").value||0)||null;
+    p.shenim=(sh.querySelector("#eS").value||"").trim();
+    var g=(sh.querySelector("#eG").value||"").trim();
+    if(g){ var m=g.replace(";",",").split(",");
+      var la=parseFloat(m[0]), ln=parseFloat(m[1]);
+      if(!isNaN(la)&&!isNaN(ln)){ p.lat=la; p.lng=ln; } }
+    logIt("ndryshim", p.emri);
+    persist(); sh.remove(); refresh(); openPika(id);
+    toast("✅ U ruajt.");
+  };
+}
+
+// ── KALKULATORI I OFERTËS ─────────────────────────────────────────────────
+// Krahason 7% me 0.25/0.30/0.35 €/pako — që ta dish cila të kushton më pak
+// PARA se t'ia prezantosh pronarit.
+function num(id){ var t=($(id).value||"").replace(",",".").trim();
+  var v=parseFloat(t); return isNaN(v)?0:v; }
+function kalk(){
+  var pako=num("#kPako"), cmim=num("#kCmim"), cikli=+$("#kCikli").value;
+  if(!pako||!cmim){ $("#kRez").innerHTML='<div class="card note">'
+    +'Fut pakot dhe çmimin.</div>'; return; }
+  var qark=pako*cmim;                       // qarkullimi mujor
+  var opts=[{t:"perqindje",v:7},{t:"fikse",v:0.25},
+            {t:"fikse",v:0.30},{t:"fikse",v:0.35}];
+  var res=opts.map(function(o){
+    var muaj = o.t==="perqindje" ? qark*o.v/100 : pako*o.v;
+    return {o:o, muaj:muaj, cikel:muaj*cikli,
+            emri:(o.t==="perqindje"?(o.v+"% e qarkullimit"):(eur(o.v)+" € për pako")),
+            form:(o.t==="perqindje"
+              ? (eur(qark)+" € × "+o.v+"% = "+eur(muaj)+" €")
+              : (pako.toFixed(0)+" pako × "+eur(o.v)+" € = "+eur(muaj)+" €"))};
+  });
+  var min=Math.min.apply(null,res.map(function(r){ return r.muaj; }));
+  $("#kRez").innerHTML='<div class="card">'
+    +'<div class="note" style="margin-bottom:9px">Qarkullimi: <b style="color:#e8eef8">'
+    +eur(qark)+' €/muaj</b> · cikli '+cikli+' muaj</div>'
+    +res.map(function(r){
+      var best=(r.muaj===min);
+      return '<div class="item">'
+        +'<div class="row"><b class="grow">'+r.emri+'</b>'
+        +(best?'<span class="tag" style="background:#14532d;color:#86efac">'
+               +'👍 MË LIRË PËR TY</span>':'')+'</div>'
+        +'<div class="note" style="font-family:monospace">'+r.form+'</div>'
+        +'<div style="margin-top:4px"><b style="font-size:17px;color:'
+        +(best?"#22c55e":"#e8eef8")+'">'+eur(r.cikel)+' €</b>'
+        +'<span class="note"> për '+cikli+' muaj  ·  '+eur(r.muaj)+' €/muaj</span></div>'
+        +'</div>';
+    }).join("")
+    +'<div class="note" style="margin-top:10px">Dallimi mes më të lirës dhe më të '
+    +'shtrenjtës: <b style="color:#eab308">'
+    +eur((Math.max.apply(null,res.map(function(r){return r.cikel;}))-min*cikli))
+    +' €</b> për cikël.</div></div>';
+}
+["#kPako","#kCmim"].forEach(function(id){
+  $(id).addEventListener("input",kalk); });
+$("#kCikli").addEventListener("change",kalk);
+
+// ── OFERTA ────────────────────────────────────────────────────────────────
+function validOferta(lloji,vlera){
+  if(lloji==="fikse" && (vlera<0.20||vlera>0.40))
+    return "⚠️ "+eur(vlera)+" € është jashtë intervalit të zakonshëm 0.20–0.40 €.";
+  if(lloji==="perqindje" && (vlera<3||vlera>15))
+    return "⚠️ "+vlera+"% është jashtë intervalit të zakonshëm 3–15%.";
+  return "";
+}
+
+function newOferta(pikaId){
+  var p=PIKA.filter(function(x){ return x.id===pikaId; })[0];
+  if(!p) return;
+  var sh=sheet("📄 Ofertë e re — "+esc(p.emri),
+    '<label>LLOJI I KOMISIONIT</label>'
+    +'<select id="oLloji"><option value="perqindje">Përqindje e qarkullimit</option>'
+    +'<option value="fikse">Shumë fikse për pako</option></select>'
+    +'<label>VLERA</label>'
+    +'<input id="oVlera" type="text" inputmode="decimal" placeholder="7  ose  0.30">'
+    +'<div class="note" id="oHint">7 = 7% e qarkullimit</div>'
+    +'<label>CIKLI I BARAZIMIT</label>'
+    +'<select id="oCikli"><option value="6">Çdo 6 muaj</option>'
+    +'<option value="12" selected>Çdo 12 muaj</option></select>'
+    +'<label>DATA E FILLIMIT</label>'
+    +'<input id="oData" type="date" value="'+today()+'">'
+    +'<label>KOHËZGJATJA (muaj)</label>'
+    +'<select id="oKohe"><option value="12">12 muaj</option>'
+    +'<option value="24" selected>24 muaj</option>'
+    +'<option value="36">36 muaj</option></select>'
+    +'<label>SHËNIM</label><textarea id="oShenim" rows="2"></textarea>'
+    +'<div id="oWarn" class="note" style="margin-top:8px"></div>'
+    +'<button class="pri btn3d" id="oRuaj" style="width:100%;margin-top:12px">'
+    +'RUAJ SI DRAFT</button>');
+  // kërko BRENDA panelit — jo në gjithë dokumentin
+  var Q=function(sel){ return sh.querySelector(sel); };
+  var nQ=function(sel){ var t=(Q(sel).value||"").replace(",",".").trim();
+    var x=parseFloat(t); return isNaN(x)?0:x; };
+  var upd=function(){
+    var l=Q("#oLloji").value, v=nQ("#oVlera");
+    Q("#oHint").textContent = l==="perqindje" ? "7 = 7% e qarkullimit"
+                                              : "0.30 = 30 cent për çdo pako";
+    Q("#oWarn").innerHTML = v ? ('<span style="color:#fcd34d">'
+      +esc(validOferta(l,v))+'</span>') : "";
+  };
+  Q("#oLloji").onchange=upd; Q("#oVlera").addEventListener("input",upd); upd();
+  Q("#oRuaj").onclick=function(){
+    var v=nQ("#oVlera");
+    if(!v){ toast("Fut vlerën.",false); return; }
+    var o={id:Date.now(), pika:pikaId, lloji:Q("#oLloji").value, vlera:v,
+           cikli:+Q("#oCikli").value, data:Q("#oData").value,
+           kohe:+Q("#oKohe").value, st:"draft",
+           shenim:(Q("#oShenim").value||"").trim()};
+    OFER.push(o); persist();
+    logIt("ofertë e re", p.emri+": "+(o.lloji==="perqindje"?(o.vlera+"%")
+          :(eur(o.vlera)+" €/pako")));
+    sh.remove(); openPika(pikaId);
+    toast("✅ Oferta u ruajt si draft.");
+  };
+}
+
+// ── GJENERIMI I BARAZIMEVE ────────────────────────────────────────────────
+// Kur oferta pranohet, kalendari krijohet VETË nga data e fillimit sipas
+// ciklit, për gjithë kohëzgjatjen — që asnjë barazim të mos harrohet.
+function genBarazime(oferta){
+  var n=Math.floor(oferta.kohe/oferta.cikli);
+  var made=0;
+  for(var i=0;i<n;i++){
+    var prej=addMonths(oferta.data, i*oferta.cikli);
+    var deri=addMonths(oferta.data, (i+1)*oferta.cikli);
+    if(BARAZ.some(function(b){ return b.oferta===oferta.id && b.prej===prej; }))
+      continue;
+    BARAZ.push({id:Date.now()+i, pika:oferta.pika, oferta:oferta.id,
+                prej:prej, deri:deri, plan:deri, st:"i_ardhshem",
+                pako:null, qark:null, llog:null, paguar:null, dataPag:""});
+    made++;
+  }
+  persist();
+  return made;
+}
+
+// ── EKRANI I BARAZIMEVE ───────────────────────────────────────────────────
+function drawBaraz(){
+  var t=today();
+  var g={vone:[], afer:[], vone30:[], kryer:[]};
+  BARAZ.forEach(function(b){
+    if(b.st==="i_kryer") g.kryer.push(b);
+    else if(b.plan<t) g.vone.push(b);
+    else if(daysBetween(t,b.plan)<=30) g.afer.push(b);
+    else g.vone30.push(b);
+  });
+  var sec=function(titull,arr,ngjyre){
+    if(!arr.length) return "";
+    return '<div style="margin:14px 0 6px;font-weight:800;color:'+ngjyre+'">'
+      +titull+' ('+arr.length+')</div><div class="card">'
+      +arr.sort(function(a,b){ return a.plan.localeCompare(b.plan); })
+          .map(function(b){
+        var p=PIKA.filter(function(x){ return x.id===b.pika; })[0]||{};
+        var o=OFER.filter(function(x){ return x.id===b.oferta; })[0]||{};
+        var val=o.lloji==="perqindje"?(o.vlera+"%"):(eur(o.vlera)+" €/pako");
+        return '<div class="item" onclick="openBaraz('+b.id+')">'
+          +'<div class="row"><b class="grow">'+esc(p.emri||"?")+'</b>'
+          +'<span style="color:'+ngjyre+';font-weight:700">'
+          +(b.st==="i_kryer"?(eur(b.paguar)+" €"):b.plan)+'</span></div>'
+          +'<div class="note">'+b.prej+' → '+b.deri+' · '+val
+          +(b.st==="i_kryer"?(" · paguar "+b.dataPag):"")+'</div></div>';
+      }).join("")+'</div>';
+  };
+  var h=sec("🔴 Të vonuara",g.vone,"#ef4444")
+       +sec("🟡 Brenda 30 ditëve",g.afer,"#eab308")
+       +sec("⚪ Të ardhshme",g.vone30,"#8b98ad")
+       +sec("✅ Të kryera",g.kryer,"#22c55e");
+  $("#bLista").innerHTML=h||'<div class="card note">Ende asnjë barazim.<br><br>'
+    +'Barazimet krijohen vetë kur një ofertë shënohet si «Pranoi».</div>';
+}
+
+function openBaraz(id){
+  var b=BARAZ.filter(function(x){ return x.id===id; })[0];
+  if(!b) return;
+  var p=PIKA.filter(function(x){ return x.id===b.pika; })[0]||{};
+  var o=OFER.filter(function(x){ return x.id===b.oferta; })[0]||{};
+  var fikse=(o.lloji==="fikse");
+  var sh=sheet("💶 "+esc(p.emri||""),
+    '<div class="note">'+b.prej+' → '+b.deri+' · '
+    +(fikse?(eur(o.vlera)+" € për pako"):(o.vlera+"% e qarkullimit"))+'</div>'
+    +'<label>'+(fikse?"SA PAKO U SHITËN":"QARKULLIMI (€)")+'</label>'
+    +'<input id="bIn" type="text" inputmode="decimal" value="'
+    +(fikse?(b.pako||""):(b.qark||""))+'">'
+    +(fikse?'<label>QARKULLIMI (€) — opsional</label>'
+            +'<input id="bQ" type="text" inputmode="decimal" value="'+(b.qark||"")+'">'
+           :'<label>SA PAKO — opsional</label>'
+            +'<input id="bQ" type="text" inputmode="numeric" value="'+(b.pako||"")+'">')
+    +'<div id="bForm" class="card" style="margin-top:12px;background:#0d1524"></div>'
+    +'<label>SHUMA E PAGUAR (€)</label>'
+    +'<input id="bPag" type="text" inputmode="decimal" value="'+(b.paguar||"")+'">'
+    +'<div class="note">Mund të ndryshojë nga e llogaritura (rrumbullakim, marrëveshje).</div>'
+    +'<label>DATA E PAGESËS</label>'
+    +'<input id="bDate" type="date" value="'+(b.dataPag||today())+'">'
+    +'<label>SHËNIM</label><input id="bSh" value="'+esc(b.shenim||"")+'">'
+    +'<button class="pri btn3d" id="bOk" style="width:100%;margin-top:12px">'
+    +(b.st==="i_kryer"?"RUAJ NDRYSHIMIN":"✓ SHËNO SI TË PAGUAR")+'</button>'
+    +'<button id="bShare" style="width:100%;margin-top:8px">'
+    +'📤 Raport për lokalin</button>');
+
+  var calc=function(){
+    var v=parseFloat((sh.querySelector("#bIn").value||"").replace(",","."))||0;
+    var shuma = fikse ? v*o.vlera : v*o.vlera/100;
+    var form = fikse
+      ? (v.toLocaleString("de-DE")+" pako × "+eur(o.vlera)+" € = "+eur(shuma)+" €")
+      : (eur(v)+" € × "+o.vlera+"% = "+eur(shuma)+" €");
+    sh.querySelector("#bForm").innerHTML=
+      '<div class="note">Llogaritja:</div>'
+      +'<div style="font-family:monospace;font-size:14px;margin:4px 0">'+form+'</div>'
+      +'<b style="font-size:22px;color:#22c55e">'+eur(shuma)+' €</b>';
+    if(!sh.querySelector("#bPag").value) sh.querySelector("#bPag").value=eur(shuma);
+    return shuma;
+  };
+  sh.querySelector("#bIn").addEventListener("input",calc); calc();
+
+  sh.querySelector("#bOk").onclick=function(){
+    var v=parseFloat((sh.querySelector("#bIn").value||"").replace(",","."))||0;
+    if(!v){ toast("Fut sasinë.",false); return; }
+    var extra=parseFloat((sh.querySelector("#bQ").value||"").replace(",","."))||null;
+    var shuma=calc();
+    var pag=parseFloat((sh.querySelector("#bPag").value||"").replace(",","."))||shuma;
+    // Barazim i kryer që ndryshohet — MBAHET GJURMË (rregull i pashkelshëm)
+    if(b.st==="i_kryer"){
+      logIt("NDRYSHIM BARAZIMI", p.emri+" "+b.prej+": "
+        +eur(b.paguar)+" € → "+eur(pag)+" €");
+    }
+    if(fikse){ b.pako=v; b.qark=extra; } else { b.qark=v; b.pako=extra; }
+    b.llog=Math.round(shuma*100)/100;
+    b.paguar=Math.round(pag*100)/100;
+    b.dataPag=sh.querySelector("#bDate").value;
+    b.shenim=(sh.querySelector("#bSh").value||"").trim();
+    b.st="i_kryer";
+    logIt("barazim i kryer", p.emri+" "+b.prej+"→"+b.deri+": "+eur(pag)+" €");
+    persist(); sh.remove(); drawBaraz(); drawAlerts();
+    toast("✅ Barazimi u shënua: "+eur(pag)+" €");
+  };
+  sh.querySelector("#bShare").onclick=function(){ shareRaport(b); };
+}
+
+function shareRaport(b){
+  var p=PIKA.filter(function(x){ return x.id===b.pika; })[0]||{};
+  var o=OFER.filter(function(x){ return x.id===b.oferta; })[0]||{};
+  var fikse=(o.lloji==="fikse");
+  var form = fikse
+    ? ((b.pako||0).toLocaleString("de-DE")+" pako × "+eur(o.vlera)+" € = "
+       +eur(b.llog)+" €")
+    : (eur(b.qark)+" € × "+o.vlera+"% = "+eur(b.llog)+" €");
+  var txt="BARAZIM — "+(p.emri||"")+"\n"
+    +(p.qyteti?(p.qyteti+"\n"):"")
+    +"────────────────────\n"
+    +"Periudha: "+b.prej+" → "+b.deri+"\n"
+    +"Marrëveshja: "+(fikse?(eur(o.vlera)+" € për pako")
+                            :(o.vlera+"% e qarkullimit"))+"\n"
+    +(b.pako?("Pako të shitura: "+b.pako.toLocaleString("de-DE")+"\n"):"")
+    +(b.qark?("Qarkullimi: "+eur(b.qark)+" €\n"):"")
+    +"────────────────────\n"
+    +"Llogaritja: "+form+"\n"
+    +"KOMISIONI: "+eur(b.paguar)+" €\n"
+    +(b.dataPag?("Data e pagesës: "+b.dataPag+"\n"):"")
+    +(b.shenim?("\n"+b.shenim+"\n"):"");
+  if(navigator.share){ navigator.share({text:txt}).catch(function(){ copy(txt); }); }
+  else copy(txt);
+}
+function copy(t){
+  if(navigator.clipboard) navigator.clipboard.writeText(t)
+    .then(function(){ toast("✅ U kopjua — ngjite në WhatsApp."); })
+    .catch(function(){ prompt("Kopjo:",t); });
+  else prompt("Kopjo:",t);
+}
+
+// ── GJEJ LOKALE ───────────────────────────────────────────────────────────
+function _dist(a,b,c,d){
+  var R=6371, r=Math.PI/180;
+  var p1=a*r,l1=b*r,p2=c*r,l2=d*r;
+  var h=Math.pow(Math.sin((p2-p1)/2),2)
+       +Math.cos(p1)*Math.cos(p2)*Math.pow(Math.sin((l2-l1)/2),2);
+  return 2*R*Math.asin(Math.sqrt(h));
+}
+$("#gGo").onclick=async function(){
+  var q=($("#gQ").value||"").trim();
+  if(!q){ toast("Shkruaj qytetin.",false); return; }
+  var box=$("#gRez");
+  box.innerHTML='<div class="card note">duke kërkuar lokalet e '+esc(q)
+    +'…<br>mund të zgjasë 10–20 sekonda</div>';
+  try{
+    var g=await fetch("https://nominatim.openstreetmap.org/search?q="
+      +encodeURIComponent(q)+"&format=json&limit=1&countrycodes=xk,rs,al,mk,me");
+    var gr=await g.json();
+    if(!gr.length){ box.innerHTML='<div class="card note">Nuk u gjet «'+esc(q)
+      +'».</div>'; return; }
+    var la=+gr[0].lat, ln=+gr[0].lon;
+    var oq='[out:json][timeout:25];('
+      +'node["amenity"~"cafe|bar|restaurant|fast_food|pub"](around:2500,'+la+','+ln+');'
+      +'node["shop"~"convenience|supermarket|kiosk"](around:2500,'+la+','+ln+');'
+      +');out body 200;';
+    var r=await fetch("https://overpass-api.de/api/interpreter",
+      {method:"POST",body:"data="+encodeURIComponent(oq),
+       headers:{"Content-Type":"application/x-www-form-urlencoded"}});
+    var d=await r.json();
+    var SHOPS=["supermarket","convenience","kiosk"];
+    var all=(d.elements||[]).map(function(e){
+      var t=e.tags||{};
+      return {name:t.name||t.operator||"", kind:t.amenity||t.shop||"",
+              lat:e.lat, lng:e.lon}; }).filter(function(x){ return x.name; });
+    var shops=all.filter(function(x){ return SHOPS.indexOf(x.kind)>=0; });
+    var venues=all.filter(function(x){ return SHOPS.indexOf(x.kind)<0; });
+    var have={}; PIKA.forEach(function(x){
+      have[(x.emri||"").toLowerCase().trim()]=x.st; });
+    var found=venues.map(function(v){
+      var m=null;
+      shops.forEach(function(s){ var dd=_dist(v.lat,v.lng,s.lat,s.lng)*1000;
+        if(m===null||dd<m) m=dd; });
+      return {name:v.name,kind:v.kind,lat:v.lat,lng:v.lng,
+              shopM:(m===null?null:Math.round(m)),
+              have:have[(v.name||"").toLowerCase().trim()]||""};
+    });
+    found.sort(function(a,b){ return (a.have?1:0)-(b.have?1:0)
+      || ((b.shopM===null?99999:b.shopM)-(a.shopM===null?99999:a.shopM)); });
+    window._found=found; window._foundCity=q;
+    var nnew=found.filter(function(x){ return !x.have; }).length;
+    box.innerHTML='<div class="note" style="padding:0 2px 8px">'+found.length
+      +' lokale · <b>'+nnew+'</b> të reja</div><div class="card">'
+      +found.map(function(f,i){
+        var dm=(f.shopM===null)?"pa market afër":(f.shopM+" m nga marketi");
+        var col=(f.shopM===null||f.shopM>250)?"#22c55e":"#8b98ad";
+        var s=f.have?stInfo(f.have):null;
+        return '<div class="item"><div class="row">'
+          +'<b class="grow">'+esc(f.name)+'</b>'
+          +(s?('<span class="tag" style="background:'+s[2]+'33;color:'+s[2]+'">'
+               +s[1]+'</span>'):'')+'</div>'
+          +'<div class="note">'+esc(f.kind)+' · <span style="color:'+col+'">'+dm
+          +'</span></div>'
+          +(s?'':'<div class="row" style="margin-top:7px;gap:5px">'
+            +'<button class="pri gAdd" data-i="'+i+'" style="font-size:12px">'
+            +'➕ Shto si potencial</button>'
+            +'<button class="gMap" data-i="'+i+'" style="font-size:12px">🗺️</button>'
+            +'</div>')+'</div>';
+      }).join("")+'</div>';
+    box.querySelectorAll(".gAdd").forEach(function(b){
+      b.onclick=function(){ addFromMap(+b.dataset.i); }; });
+    box.querySelectorAll(".gMap").forEach(function(b){
+      b.onclick=function(){ var f=window._found[+b.dataset.i];
+        window.open("https://maps.google.com/?q="+f.lat+","+f.lng,"_blank"); }; });
+  }catch(e){
+    box.innerHTML='<div class="card note" style="color:#fca5a5">'
+      +'Kërkimi kërkon internet.<br>'+e+'</div>';
+  }
+};
+function addFromMap(i){
+  var f=window._found[i]; if(!f) return;
+  var kindMap={cafe:"kafene",bar:"bar",restaurant:"restorant",
+               fast_food:"restorant",pub:"bar",fuel:"benzinë"};
+  PIKA.push({id:Date.now()+Math.random(), emri:f.name,
+             qyteti:window._foundCity||"", lloji:kindMap[f.kind]||"tjetër",
+             st:"potencial", kontakt:"", tel:"", pare:today(), ndjekja:"",
+             vler:null, lat:f.lat, lng:f.lng, shenim:
+             (f.shopM===null?"Pa market afër":(f.shopM+" m nga marketi"))});
+  f.have="potencial";
+  logIt("pikë e re", f.name);
+  persist(); refresh(); $("#gGo").click();
+  try{ if(navigator.vibrate) navigator.vibrate(25); }catch(e){}
+}
+
+// ── EKSPORTET ─────────────────────────────────────────────────────────────
+function dl(name, text, type){
+  var blob=new Blob([text],{type:type||"text/csv;charset=utf-8"});
+  if(navigator.share && navigator.canShare){
+    var f=new File([blob],name,{type:blob.type});
+    if(navigator.canShare({files:[f]})){
+      navigator.share({files:[f]}).catch(function(){ _dl2(blob,name); }); return; }
+  }
+  _dl2(blob,name);
+}
+function _dl2(blob,name){
+  var a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download=name; a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); },4000);
+  toast("U ruajt: "+name);
+}
+function csvCell(v){ v=String(v==null?"":v);
+  return (v.indexOf(",")>=0||v.indexOf('"')>=0||v.indexOf("\n")>=0)
+    ? '"'+v.split('"').join('""')+'"' : v; }
+
+$("#eCsvBaraz").onclick=function(){
+  var rows=[["lokali","qyteti","periudha_prej","periudha_deri","lloji","vlera",
+             "pako","qarkullimi_eur","komisioni_eur","paguar_eur","data_pageses",
+             "statusi","shenim"]];
+  BARAZ.forEach(function(b){
+    var p=PIKA.filter(function(x){ return x.id===b.pika; })[0]||{};
+    var o=OFER.filter(function(x){ return x.id===b.oferta; })[0]||{};
+    rows.push([p.emri||"",p.qyteti||"",b.prej,b.deri,o.lloji||"",o.vlera||"",
+               b.pako||"",b.qark==null?"":eur(b.qark),
+               b.llog==null?"":eur(b.llog),b.paguar==null?"":eur(b.paguar),
+               b.dataPag||"",b.st,b.shenim||""]);
+  });
+  dl("barazimet_"+today()+".csv",
+     rows.map(function(r){ return r.map(csvCell).join(","); }).join("\n"));
+};
+
+$("#eCsvMaps").onclick=function(){
+  var rows=[["emri","qyteti","statusi","lloji","latitude","longitude",
+             "personi","telefoni","shenim"]];
+  PIKA.filter(function(p){ return p.lat!=null; }).forEach(function(p){
+    rows.push([p.emri,p.qyteti||"",stInfo(p.st)[1],p.lloji||"",
+               p.lat,p.lng,p.kontakt||"",p.tel||"",p.shenim||""]);
+  });
+  dl("pika_mymaps_"+today()+".csv",
+     rows.map(function(r){ return r.map(csvCell).join(","); }).join("\n"));
+};
+
+$("#eBackup").onclick=function(){
+  dl("pika_backup_"+today()+".json",
+     JSON.stringify({v:1, kur:new Date().toISOString(),
+                     pika:PIKA, oferta:OFER, barazim:BARAZ, log:LOGU}),
+     "application/json");
+};
+
+$("#eRestore").onclick=function(){
+  var inp=document.createElement("input");
+  inp.type="file"; inp.accept=".json,application/json";
+  inp.onchange=function(){
+    var f=inp.files[0]; if(!f) return;
+    var rd=new FileReader();
+    rd.onload=function(){
+      try{
+        var d=JSON.parse(rd.result);
+        if(!d.pika) throw new Error("Skedar i panjohur.");
+        if(!confirm("Rikthe "+(d.pika||[]).length+" pika, "
+          +(d.oferta||[]).length+" oferta, "+(d.barazim||[]).length
+          +" barazime?\n\nGjendja aktuale ZËVENDËSOHET.")) return;
+        PIKA=d.pika||[]; OFER=d.oferta||[]; BARAZ=d.barazim||[]; LOGU=d.log||[];
+        persist(); refresh(); drawBaraz();
+        toast("✅ U rikthye.");
+      }catch(e){ toast("Skedar i pavlefshëm: "+e,false); }
+    };
+    rd.readAsText(f);
+  };
+  inp.click();
+};
+
+$("#bOpenAp").onclick=function(){
+  window.open("https://luqa25.github.io/aparatet-terreni/","_blank"); };
+
+function drawStat(){
+  var vals=[["Pika gjithsej",PIKA.length],
+    ["Me GPS",PIKA.filter(function(p){return p.lat!=null;}).length],
+    ["Oferta",OFER.length],
+    ["Barazime",BARAZ.length],
+    ["Të kryera",BARAZ.filter(function(b){return b.st==="i_kryer";}).length],
+    ["Paguar gjithsej",eur(BARAZ.reduce(function(s,b){
+      return s+(b.paguar||0); },0))+" €"],
+    ["Shënime historie",LOGU.length]];
+  $("#mStat").innerHTML=vals.map(function(v){
+    return "<tr><td>"+v[0]+"</td><td><b>"+v[1]+"</b></td></tr>"; }).join("");
+}
+
+// ── DËRGO TE APARATET ─────────────────────────────────────────────────────
+// localStorage lidhet me DOMENIN — të dy programet janë te luqa25.github.io,
+// prandaj shkrimi këtu duket menjëherë te Aparatet.
+$("#bSync").onclick=function(){
+  var gati=PIKA.filter(function(p){
+    return (p.st==="pranuar"||p.st==="aktiv") && p.lat!=null; });
+  if(!gati.length){ toast("Asnjë pikë e pranuar me GPS.",false); return; }
+  var cat=load("apar_live_catalog",null);
+  if(!cat){ toast("Aparatet s'ka katalog në këtë telefon.",false); return; }
+  cat.machines=cat.machines||[];
+  var added=0;
+  gati.forEach(function(p){
+    var key=(p.qyteti?p.qyteti+" · ":"")+p.emri;
+    if(cat.machines.some(function(m){ return (m.place||"")===key; })) return;
+    var maxId=cat.machines.reduce(function(x,m){
+      return Math.max(x,+m.id||0); },0);
+    cat.machines.push({id:maxId+1, code:"", city:p.qyteti||"", place:key,
+      created_at:new Date().toISOString(), visit_order:0, channels:0,
+      capacity:0, planogram:[], baseline:{}, float:{},
+      lat:p.lat, lng:p.lng, park_lat:null, park_lng:null,
+      photo:"", photos:[], status:"ok", status_note:"",
+      owner:p.kontakt||"", contract_type:"", contract_value:0,
+      contract_start:"", contract_clause:""});
+    added++;
+    if(p.st==="pranuar") p.st="aktiv";
+  });
+  if(!added){ toast("Të gjitha janë tashmë te Aparatet."); return; }
+  save("apar_live_catalog",cat);
+  persist(); refresh();
+  toast("✅ "+added+" pika kaluan te Aparatet.");
+};
+
+function refresh(){ drawFilt(); drawPika(); drawAlerts(); }
+refresh(); drawStat();
+
+// Service worker — shteg ABSOLUT, ndryshe s'regjistrohet nga Home Screen (iOS).
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("/pika-te-reja/sw.js").catch(function(){});
+}
+</script>
+</body>
+</html>
