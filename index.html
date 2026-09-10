@@ -153,6 +153,15 @@ td:first-child{color:var(--dim)}
       <button id="bOpenAp" style="width:100%">Hap Aparatet →</button>
     </div>
     <div class="card">
+      <b style="font-size:15px">🔄 Versioni</b>
+      <div class="note" style="margin:6px 0" id="vInfo"></div>
+      <button class="pri btn3d" id="bUpdate" style="width:100%">
+        🔄 MERR VERSIONIN E RI</button>
+      <div class="note" style="margin-top:5px">Shkarkon versionin e fundit nga
+        interneti. <b>Të dhënat NUK fshihen</b> — pikat, ofertat dhe barazimet
+        mbeten të ruajtura.</div>
+    </div>
+    <div class="card">
       <b style="font-size:15px">ℹ️ Gjendja</b>
       <table><tbody id="mStat"></tbody></table>
     </div>
@@ -177,6 +186,10 @@ window.onerror=function(m,src,ln){
          t.textContent="Gabim JS (rreshti "+ln+"): "+m; }
   return false;
 };
+
+// Rritet me çdo version të ri — BASHKË me emrin e cache-it te sw.js,
+// përndryshe telefoni mbetet me versionin e vjetër dhe s'kupton pse.
+var APP_VER="v2";
 
 var $=function(s){ return document.querySelector(s); };
 function esc(s){ return String(s==null?"":s).split("&").join("&amp;")
@@ -274,7 +287,7 @@ function drawPika(){
   }).sort(function(a,b){ return (b.pare||"").localeCompare(a.pare||""); });
 
   $("#hCount").textContent=PIKA.length+" pika · "
-    +PIKA.filter(function(p){return p.st==="aktiv";}).length+" aktive";
+    +PIKA.filter(function(p){return p.st==="aktiv";}).length+" aktive · "+APP_VER;
 
   if(!rows.length){
     $("#lista").innerHTML='<div class="card note">'
@@ -990,8 +1003,35 @@ $("#bSync").onclick=function(){
   toast("✅ "+added+" pika kaluan te Aparatet.");
 };
 
+// ── MERR VERSIONIN E RI ───────────────────────────────────────────────────
+// Çregjistron service worker-in dhe pastron cache-in, pastaj ringarkon.
+// Të dhënat janë te localStorage — ato NUK preken nga kjo.
+$("#bUpdate").onclick=async function(){
+  if(!confirm("Të merret versioni i ri nga interneti?\n\n"
+    +"Të dhënat (pikat, ofertat, barazimet) NUK fshihen.")) return;
+  var b=this; b.textContent="DUKE SHKARKUAR…"; b.disabled=true;
+  try{
+    if("serviceWorker" in navigator){
+      var rs=await navigator.serviceWorker.getRegistrations();
+      for(var i=0;i<rs.length;i++) await rs[i].unregister();
+    }
+    if("caches" in window){
+      var ks=await caches.keys();
+      for(var j=0;j<ks.length;j++) await caches.delete(ks[j]);
+    }
+  }catch(e){ /* vazhdo gjithsesi — ringarkimi e merr te renë */ }
+  location.reload(true);
+};
+
+function drawVer(){
+  var el=$("#vInfo"); if(!el) return;
+  var n=PIKA.length+OFER.length+BARAZ.length;
+  el.innerHTML="Versioni: <b style='color:#38bdf8'>"+APP_VER+"</b>"
+    +"<br>Të dhëna të ruajtura: <b>"+n+"</b> zëra";
+}
+
 function refresh(){ drawFilt(); drawPika(); drawAlerts(); }
-refresh(); drawStat();
+refresh(); drawStat(); drawVer();
 
 // Service worker — shteg ABSOLUT, ndryshe s'regjistrohet nga Home Screen (iOS).
 if("serviceWorker" in navigator){
