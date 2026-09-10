@@ -145,20 +145,6 @@ td:first-child{color:var(--dim)}
       <div class="note" style="margin-top:4px">Gjithçka: pikat, ofertat, barazimet, historia.</div>
       <button class="btn3d" id="eRestore" style="width:100%;margin-top:9px;background:#7f1d1d;color:#fff">
         📥 Rikthe nga backup</button>
-      <div class="note" style="margin-top:4px">Nga një skedar .json i ruajtur.</div>
-
-      <div style="border-top:1px solid #1e293b;margin:13px 0 0;padding-top:11px">
-        <b style="font-size:14px">📋 Ngjit të dhënat</b>
-        <div class="note" style="margin:5px 0 7px">Kur skedari nuk shkarkohet dot:
-          kopjoji nga PC-ja, prek kutinë, mbaj gishtin dhe zgjidh
-          <b>Paste</b>.</div>
-        <textarea id="ePaste" rows="3" placeholder="Ngjit këtu..."
-          style="width:100%;box-sizing:border-box;background:#0b1220;
-          color:#e2e8f0;border:1px solid #334155;border-radius:9px;
-          padding:9px;font-size:13px;font-family:monospace"></textarea>
-        <button class="btn3d" id="ePasteGo" style="width:100%;margin-top:8px;
-          background:#7c2d12;color:#fff">✅ FUT PIKAT</button>
-      </div>
     </div>
     <div class="card">
       <b style="font-size:15px">🔗 Lidhja me Aparatet</b>
@@ -203,7 +189,7 @@ window.onerror=function(m,src,ln){
 
 // Rritet me çdo version të ri — BASHKË me emrin e cache-it te sw.js,
 // përndryshe telefoni mbetet me versionin e vjetër dhe s'kupton pse.
-var APP_VER="v4";
+var APP_VER="v3";
 
 var $=function(s){ return document.querySelector(s); };
 function esc(s){ return String(s==null?"":s).split("&").join("&amp;")
@@ -987,48 +973,6 @@ $("#eRestore").onclick=function(){
     rd.readAsText(f);
   };
   inp.click();
-};
-
-$("#ePasteGo").onclick=function(){
-  var raw=($("#ePaste").value||"").trim();
-  if(!raw){ toast("Kutia është bosh.",false); return; }
-  var d;
-  try{ d=JSON.parse(raw); }
-  catch(e){ toast("Teksti nuk është JSON i vlefshëm.",false); return; }
-  var reja=d.pika||(Array.isArray(d)?d:null);
-  if(!reja){ toast("S'ka pika brenda.",false); return; }
-
-  // emrat që i kemi tashmë — që ngjitja dy herë të mos bëjë dublikata
-  var kam={};
-  PIKA.forEach(function(p){ kam[(p.emri||"").toLowerCase().trim()]=1; });
-
-  var shtuar=0, anashkaluar=0;
-  reja.forEach(function(r){
-    var em=(r.emri||r.name||"").trim();
-    if(!em) return;
-    if(kam[em.toLowerCase()]){ anashkaluar++; return; }
-    PIKA.push({id:Date.now()+Math.random(), emri:em,
-      qyteti:r.qyteti||"", lloji:r.lloji||"tjetër",
-      st:r.st||"potencial", kontakt:r.kontakt||"", tel:r.tel||"",
-      pare:r.pare||today(), ndjekja:r.ndjekja||"",
-      vler:(r.vler==null?null:r.vler),
-      lat:(r.lat==null?null:r.lat), lng:(r.lng==null?null:r.lng),
-      shenim:r.shenim||""});
-    kam[em.toLowerCase()]=1; shtuar++;
-  });
-
-  if(!shtuar){ toast("Të "+anashkaluar+" pikat ekzistojnë tashmë.",false); return; }
-  logIt("ngjitje", shtuar+" pika nga PC");
-  persist(); refresh();
-  $("#ePaste").value="";
-  alert("✅ U shtuan "+shtuar+" pika."
-    +(anashkaluar?"
-
-"+anashkaluar+" ishin tashmë aty — u anashkaluan.":"")
-    +"
-
-Shikoji te skeda 📋 Pikat.");
-  try{ if(navigator.vibrate) navigator.vibrate(30); }catch(e){}
 };
 
 $("#bOpenAp").onclick=function(){
